@@ -16,7 +16,7 @@ fn main() {
 
     let instructions = bf::parse(&input);
 
-    println!("{:?}", instructions);
+    //println!("{:?}", instructions);
 
     let mut idx: isize = 0;
 

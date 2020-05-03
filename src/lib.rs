@@ -33,18 +33,30 @@ pub fn parse(program: &str) -> Vec<Instructions> {
     op
 }
 
-pub fn run(inst: &[Instructions], ptr: *mut u8, curr: &mut isize) {
-    for (i, op) in inst.iter().enumerate() {
-        //println!("{:?}", op);
+pub fn run(inst: &[Instructions], ptr: *mut u8, curr: &mut isize) -> usize {
+    let mut it = inst.iter().enumerate();
+    let mut actions: usize = 0;
+
+    while let Some((i, op)) = it.next() {
         match op {
             Instructions::IncrementPointer => *curr += 1,
             Instructions::DecrementPointer => *curr -= 1,
             Instructions::IncrementValue => unsafe { *ptr.offset(*curr) += 1 },
             Instructions::DecrementValue => unsafe { *ptr.offset(*curr) -= 1 },
-            Instructions::BeginLoop => continue,
-            Instructions::EndLoop => continue,
+            Instructions::BeginLoop => {
+                let mut skip = 0;
+                while unsafe { *ptr.offset(*curr) != 0 } {
+                    skip = run(&inst[i+1..], ptr, curr);
+                }
+                // Skip inner loop
+                it.nth(skip);
+                continue;
+            },
+            Instructions::EndLoop => return actions,
             Instructions::ReadChar => continue,
             Instructions::PrintChar => unsafe { print!("{}", *ptr.offset(*curr) as char) },
         }
+        actions += 1;
     }
+    actions
 }

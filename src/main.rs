@@ -14,7 +14,11 @@ fn main() {
         process::exit(1);
     });
 
-    let contents = bf::bf_parse(&input);
+    let instructions = bf::parse(&input);
 
-    println!("{:?}", contents);
+    println!("{:?}", instructions);
+
+    let mut idx: isize = 0;
+
+    bf::run(&instructions, data.as_mut_ptr(), &mut idx);
 }

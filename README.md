@@ -13,8 +13,8 @@ $ cargo build --release # Build the project in release mode. Omitting the --rele
 
 ## Implementation details
 
-- Wrapping overflow behavior
-- Reserved memory is static and constituted of an vector and each cell holds 1 byte of data
+- Wrapping integer overflow behavior
+- Reserved memory is static and constituted of an vector where each cell holds 1 byte of data
 - The current implementation of loops is naive and does not handle nested loops
 
 ## License

@@ -1,6 +1,8 @@
 use clap::{App, Arg};
 
-use std::{fs, num::Wrapping, process};
+use std::num::Wrapping;
+use std::time::Instant;
+use std::{fs, process};
 
 fn main() {
     let matches = App::new("rust-bf")
@@ -18,11 +20,15 @@ fn main() {
                 .short("m")
                 .long("memory")
                 .value_name("BYTES")
-                .help(
-                    "The amount of bytes that will be reserved during the execution of the program",
-                )
+                .help("Quantity of bytes reserved during the execution of the program")
                 .takes_value(true)
                 .default_value("1024"),
+        )
+        .arg(
+            Arg::with_name("verbose")
+                .short("v")
+                .long("verbose")
+                .help("Be verbose"),
         )
         .get_matches();
 
@@ -45,5 +51,14 @@ fn main() {
 
     let instructions = bf::parse(&program);
 
-    bf::run(&instructions, &mut data, &mut 0usize);
+    let now = Instant::now();
+    let actions = bf::run(&instructions, &mut data, &mut 0usize);
+
+    if matches.occurrences_of("verbose") == 1 {
+        println!(
+            "\nFinished {} instructions in {} ms",
+            actions,
+            now.elapsed().as_millis()
+        );
+    }
 }

@@ -31,7 +31,6 @@ pub fn parse(program: &str) -> Vec<Instructions> {
             _ => continue,
         }
     }
-
     op
 }
 
@@ -51,11 +50,12 @@ pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], idx: &mut usize) ->
                 let mut skip = 0;
                 while data[*idx] != Wrapping(0) {
                     skip = run(&inst[i + 1..], data, idx);
+                    actions += skip;
                 }
                 // Skip inner loop
                 it.nth(skip);
             }
-            Instructions::EndLoop => return actions,
+            Instructions::EndLoop => return actions + 1,
             Instructions::ReadChar => match io::stdin().bytes().next() {
                 Some(res) => {
                     if let Ok(value) = res {

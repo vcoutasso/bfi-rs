@@ -5,6 +5,8 @@ use std::time::Instant;
 use std::{fs, process};
 
 fn main() {
+    let now = Instant::now();
+
     let matches = App::new("rust-bf")
         .author("Vinícius Couto <vinicouto12@gmail.com>")
         .about("A simple interpreter for the brainfuck programming language")
@@ -22,7 +24,7 @@ fn main() {
                 .value_name("BYTES")
                 .help("Quantity of bytes reserved during the execution of the program")
                 .takes_value(true)
-                .default_value("1024"),
+                .default_value("30000"),
         )
         .arg(
             Arg::with_name("verbose")
@@ -51,13 +53,12 @@ fn main() {
 
     let instructions = bf::parse(&program);
 
-    let now = Instant::now();
-    let actions = bf::run(&instructions, &mut data, &mut 0usize);
+    let count_instructions = bf::run(&instructions, &mut data, &mut 0usize);
 
     if matches.occurrences_of("verbose") == 1 {
         println!(
             "\nFinished {} instructions in {} ms",
-            actions,
+            count_instructions,
             now.elapsed().as_millis()
         );
     }

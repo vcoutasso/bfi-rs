@@ -36,7 +36,7 @@ pub fn parse(program: &str) -> Vec<Instructions> {
 }
 
 // Here's where the magic happens. With the course of action extracted with the parse() function, the only thing that is left to do is to take the appropriate action given an instruction
-pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], idx: &mut usize) -> usize {
+pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> usize {
     // Variable to keep track of how many instructions were performed
     let mut actions: usize = 0;
     // Counter
@@ -63,40 +63,40 @@ pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], idx: &mut usize) ->
     while i < inst.len() {
         match inst[i] {
             Instructions::IncrementPointer => {
-                if *idx == data.len() - 1 {
-                    *idx = 0
+                if idx == data.len() - 1 {
+                    idx = 0
                 } else {
-                    *idx += 1
+                    idx += 1
                 }
             }
             Instructions::DecrementPointer => {
-                if *idx == 0 {
-                    *idx = data.len() - 1
+                if idx == 0 {
+                    idx = data.len() - 1
                 } else {
-                    *idx -= 1
+                    idx -= 1
                 }
             }
-            Instructions::IncrementValue => data[*idx] += Wrapping(1),
-            Instructions::DecrementValue => data[*idx] -= Wrapping(1),
+            Instructions::IncrementValue => data[idx] += Wrapping(1),
+            Instructions::DecrementValue => data[idx] -= Wrapping(1),
             Instructions::BeginLoop => {
-                if data[*idx] == Wrapping(0) {
+                if data[idx] == Wrapping(0) {
                     i = jump[i];
                 }
             }
             Instructions::EndLoop => {
-                if data[*idx] != Wrapping(0) {
+                if data[idx] != Wrapping(0) {
                     i = jump[i];
                 }
             }
             Instructions::ReadChar => match io::stdin().bytes().next() {
                 Some(res) => {
                     if let Ok(value) = res {
-                        data[*idx] = Wrapping(value)
+                        data[idx] = Wrapping(value)
                     }
                 }
                 None => eprintln!("Could not read from stdin"),
             },
-            Instructions::PrintChar => print!("{}", char::from(data[*idx].0)),
+            Instructions::PrintChar => print!("{}", char::from(data[idx].0)),
         }
         actions += 1;
         i += 1;

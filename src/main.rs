@@ -54,7 +54,7 @@ fn main() {
 
     let instructions = bf::parse(&program);
 
-    let count_instructions = bf::run(&instructions, &mut data, &mut 0usize);
+    let count_instructions = bf::run(&instructions, &mut data, 0usize);
 
     if matches.occurrences_of("verbose") == 1 {
         println!(

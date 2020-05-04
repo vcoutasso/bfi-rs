@@ -8,6 +8,7 @@ fn main() {
     let now = Instant::now();
 
     let matches = App::new("rust-bf")
+        .version("0.1.0")
         .author("Vinícius Couto <vinicouto12@gmail.com>")
         .about("A simple interpreter for the brainfuck programming language")
         .arg(

@@ -62,6 +62,7 @@ pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> 
 
     while i < inst.len() {
         match inst[i] {
+            // If idx is equal to the last position, return to the first
             Instructions::IncrementPointer => {
                 if idx == data.len() - 1 {
                     idx = 0
@@ -69,6 +70,7 @@ pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> 
                     idx += 1
                 }
             }
+            // If idx is equal to the first position, go to the last
             Instructions::DecrementPointer => {
                 if idx == 0 {
                     idx = data.len() - 1

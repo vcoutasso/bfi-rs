@@ -9,16 +9,12 @@ fn main() {
 
     let filename = "hello.bf";
 
-    let input = fs::read_to_string(String::from(filename)).unwrap_or_else(|err| {
+    let program = fs::read_to_string(String::from(filename)).unwrap_or_else(|err| {
         eprintln!("Error reading file: {}", err);
         process::exit(1);
     });
 
-    let instructions = bf::parse(&input);
+    let instructions = bf::parse(&program);
 
-    //println!("{:?}", instructions);
-
-    let mut idx: isize = 0;
-
-    bf::run(&instructions, data.as_mut_ptr(), &mut idx);
+    bf::run(&instructions, &mut data, &mut 0usize);
 }

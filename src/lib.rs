@@ -1,4 +1,4 @@
-use std::io;
+use std::io::{self, Read};
 
 #[derive(Debug)]
 pub enum Instructions {
@@ -12,6 +12,7 @@ pub enum Instructions {
     PrintChar,
 }
 
+// Translates the code from a string of chars to a Vec of Instructions to be later matched against properly in run()
 pub fn parse(program: &str) -> Vec<Instructions> {
     let mut op: Vec<Instructions> = vec![];
 
@@ -33,28 +34,39 @@ pub fn parse(program: &str) -> Vec<Instructions> {
     op
 }
 
-pub fn run(inst: &[Instructions], ptr: *mut u8, curr: &mut isize) -> usize {
+// Here's where the magic happens. With the course of action extracted with the parse() function, the only thing that is left to do is to take the appropriate action given an instruction
+pub fn run(inst: &[Instructions], data: &mut [u8], idx: &mut usize) -> usize {
     let mut it = inst.iter().enumerate();
     let mut actions: usize = 0;
 
     while let Some((i, op)) = it.next() {
         match op {
-            Instructions::IncrementPointer => *curr += 1,
-            Instructions::DecrementPointer => *curr -= 1,
-            Instructions::IncrementValue => unsafe { *ptr.offset(*curr) += 1 },
-            Instructions::DecrementValue => unsafe { *ptr.offset(*curr) -= 1 },
+            Instructions::IncrementPointer => *idx += 1,
+            Instructions::DecrementPointer => *idx -= 1,
+            Instructions::IncrementValue => data[*idx] += 1,
+            Instructions::DecrementValue => data[*idx] -= 1,
+            // TODO: This approach does not work with nested loops!
             Instructions::BeginLoop => {
                 let mut skip = 0;
-                while unsafe { *ptr.offset(*curr) != 0 } {
-                    skip = run(&inst[i+1..], ptr, curr);
+                while data[*idx] != 0 {
+                    skip = run(&inst[i+1..], data, idx);
                 }
                 // Skip inner loop
                 it.nth(skip);
-                continue;
             },
             Instructions::EndLoop => return actions,
-            Instructions::ReadChar => continue,
-            Instructions::PrintChar => unsafe { print!("{}", *ptr.offset(*curr) as char) },
+            Instructions::ReadChar => {
+                match io::stdin().bytes().next() {
+                    Some(res) => {
+                        match res {
+                            Ok(value) => data[*idx] = value,
+                            Err(_) => (),
+                        }
+                    },
+                    None => eprintln!("Could not read from stdin"),
+                }
+            },
+            Instructions::PrintChar => print!("{}", data[*idx] as char),
         }
         actions += 1;
     }

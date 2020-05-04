@@ -53,7 +53,7 @@ pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> 
             Instructions::BeginLoop => begin.push_back(i),
             Instructions::EndLoop => {
                 let index = begin.pop_back().unwrap(); // Index of most recent loop
-                jump[i] = index; // When code reach the ith instructions, go to index and continue from there
+                jump[i] = index; // When code reaches the ith instruction, go to index and continue from there
                 jump[index] = i; // When index is reached, go back to the start of the loop
             }
             _ => continue,

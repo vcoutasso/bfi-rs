@@ -1,6 +1,6 @@
 # rust-bf
 
-A simple and efficient brainfuck interpreter written in Rust.
+A simple brainfuck interpreter written in Rust.
 
 ## Build instructions
 

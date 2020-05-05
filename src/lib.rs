@@ -19,7 +19,7 @@ pub enum Instructions {
 }
 
 // Translates the code from a string of chars to a Vec of Instructions to be later matched against properly in run(). Returns a vector with the instructions in the order that they appear, but with some optimizations
-pub fn parse(program: &str) -> Vec<Instructions> {
+pub fn parse(program: &str, opt_level: i32) -> Vec<Instructions> {
     // Raw instructions extracted from program
     let mut instructions: Vec<Instructions> = vec![];
 
@@ -39,54 +39,59 @@ pub fn parse(program: &str) -> Vec<Instructions> {
         }
     }
 
-    // Replaces all the occurrences of set_zero for the equivalent and more efficient Instruction::SetZero
-    let set_zero = [BeginLoop, DecrementValue(1), EndLoop];
+    if opt_level > 0 {
+        // Replaces all the occurrences of set_zero for the equivalent and more efficient Instruction::SetZero
+        let set_zero = [BeginLoop, DecrementValue(1), EndLoop];
 
-    // This vector contains all instructions in their optimized form (grouped)
-    let mut optimized: Vec<Instructions> = vec![];
-    // This slice represents the enum variants that can be grouped together
-    let groupable = [
-        IncrementPointer(1),
-        DecrementPointer(1),
-        IncrementValue(1),
-        DecrementValue(1),
-    ];
-    // Counter
-    let mut i = 0;
+        // This vector contains all instructions in their optimized form (grouped)
+        let mut optimized: Vec<Instructions> = vec![];
+        // This slice represents the enum variants that can be grouped together
+        let groupable = [
+            IncrementPointer(1),
+            DecrementPointer(1),
+            IncrementValue(1),
+            DecrementValue(1),
+        ];
+        // Counter
+        let mut i = 0;
 
-    // Keep track of how many repeated groupable instructions are close together for later simplification
-    // e.g. ++ => IncrementValue(2)
-    while i < instructions.len() {
-        let mut acc = 1;
+        // Keep track of how many repeated groupable instructions are close together for later simplification
+        // e.g. ++ => IncrementValue(2)
+        while i < instructions.len() {
+            let mut acc = 1;
 
-        // If groupable, create an equivalent instruction
-        if groupable.contains(&instructions[i]) {
-            while Some(&instructions[i]) == instructions[i + acc..].iter().next() {
-                acc += 1;
+            // If groupable, create an equivalent instruction
+            if groupable.contains(&instructions[i]) {
+                while Some(&instructions[i]) == instructions[i + acc..].iter().next() {
+                    acc += 1;
+                }
             }
-        }
-        // Check if the next 3 instructions are equivalent to SetZero and if so, use it instead
-        else if instructions[i] == BeginLoop
+            // Check if the next 3 instructions are equivalent to SetZero and if so, use it instead
+            else if opt_level > 1
+            && instructions[i] == BeginLoop
             && i + set_zero.len() < instructions.len() // If the slice is not out of bounds
             && instructions[i..i + set_zero.len()] == set_zero
-        // Check if it is equivalent to SetZero
-        {
-            optimized.push(SetZero);
-            i += set_zero.len(); // Skip instructions we don't need anymore
-            continue; // All done here, go to next
-        }
+            // Check if it is equivalent to SetZero
+            {
+                optimized.push(SetZero);
+                i += set_zero.len(); // Skip instructions we don't need anymore
+                continue; // All done here, go to next
+            }
 
-        // Doesn't look very pretty, but it gets the job done
-        match instructions[i] {
-            IncrementPointer(_) => optimized.push(IncrementPointer(acc)),
-            DecrementPointer(_) => optimized.push(DecrementPointer(acc)),
-            IncrementValue(_) => optimized.push(IncrementValue(acc)),
-            DecrementValue(_) => optimized.push(DecrementValue(acc)),
-            _ => optimized.push(instructions[i].clone()),
+            // Doesn't look very pretty, but it gets the job done
+            match instructions[i] {
+                IncrementPointer(_) => optimized.push(IncrementPointer(acc)),
+                DecrementPointer(_) => optimized.push(DecrementPointer(acc)),
+                IncrementValue(_) => optimized.push(IncrementValue(acc)),
+                DecrementValue(_) => optimized.push(DecrementValue(acc)),
+                _ => optimized.push(instructions[i].clone()),
+            }
+            i += acc;
         }
-        i += acc;
+        optimized
+    } else {
+        instructions
     }
-    optimized
 }
 
 // Here's where the magic happens. With the course of action extracted with the parse() function, the only thing that is left to do is to take the appropriate action given an instruction

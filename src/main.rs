@@ -47,6 +47,15 @@ fn main() {
                 .long("list")
                 .help("Prints the instructions executed"),
         )
+        .arg(
+            Arg::with_name("optimization_level")
+                .short("O")
+                .long("optimization")
+                .takes_value(true)
+                .default_value("1")
+                .possible_values(&["0", "1", "2"])
+                .help("Optimization level"),
+        )
         .get_matches();
 
     let memory_amount: usize = match matches.value_of("memory").unwrap().parse() {
@@ -66,7 +75,14 @@ fn main() {
         process::exit(1);
     });
 
-    let instructions = bf::parse(&program);
+    // Unwrap is safe here because clap guarantees only valid values will be accepted
+    let opt_level = matches
+        .value_of("optimization_level")
+        .unwrap()
+        .parse()
+        .unwrap();
+
+    let instructions = bf::parse(&program, opt_level);
 
     let count_instructions = bf::run(&instructions, &mut data, 0usize);
 

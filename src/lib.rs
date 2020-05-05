@@ -184,6 +184,13 @@ pub fn dump_mem(memory: &[Wrapping<u8>], filename: &str, addr: usize) -> io::Res
             f.write_all(format!("0x{:02X} \t", value).as_bytes())?;
         }
 
+        // Format last line properly if it is shorter than the previous ones
+        if i + step > memory.len() {
+            for _j in 0..(step - (memory.len()%step)) {
+                f.write_all(b"\t")?;
+            }
+        }
+
         for value in memory.iter().skip(i).take(step) {
             if value.0.is_ascii_graphic() {
                 f.write_all(format!("{}", value.0 as char).as_bytes())?;

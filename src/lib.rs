@@ -108,7 +108,7 @@ pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> 
     // Vec with indexes of jumps to be made during execution (loops)
     let mut jump: Vec<usize> = vec![0; inst.len()];
 
-    // This takes care of nested loops and how the interpreter should deal to them. jump will be filled with the indexes to perform the appropriate jumps at appropriate times
+    // This takes care of nested loops and how the interpreter should deal with them. jump will be filled with the indexes to perform the appropriate jumps at appropriate times
     for i in 0..inst.len() {
         match inst[i] {
             BeginLoop => stack.push(i),

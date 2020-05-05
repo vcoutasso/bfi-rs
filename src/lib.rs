@@ -49,19 +49,17 @@ pub fn parse(program: &str) -> Vec<Instructions> {
     // Counter
     let mut i = 0;
 
+    // Keep track of how many repeated groupable instructions are close together for later simplification
+    // e.g. ++ => IncrementValue(2)
     while i < instructions.len() {
         let mut acc = 1;
         if groupable.contains(&instructions[i]) {
-            for next_inst in instructions[i + 1..].iter() {
-                if instructions[i] == *next_inst {
-                    acc += 1;
-                } else {
-                    break;
-                }
+            while Some(&instructions[i]) == instructions[i + acc..].iter().next() {
+                acc += 1;
             }
         }
 
-        // Doesn't look very pretty, but I couldn't find another way to do it so far
+        // Doesn't look very pretty, but it gets the job done
         match instructions[i] {
             IncrementPointer(_) => optimized.push(IncrementPointer(acc)),
             DecrementPointer(_) => optimized.push(DecrementPointer(acc)),

@@ -17,7 +17,7 @@ pub enum Instructions {
     PrintChar,               // Print value as char to stdout
 }
 
-// Translates the code from a string of chars to a Vec of Instructions to be later matched against properly in run(). Returns a vector with the instructions in the order that they appear
+// Translates the code from a string of chars to a Vec of Instructions to be later matched against properly in run(). Returns a vector with the instructions in the order that they appear, but grouped where appropriate
 pub fn parse(program: &str) -> Vec<Instructions> {
     // Raw instructions extracted from program
     let mut instructions: Vec<Instructions> = vec![];
@@ -75,6 +75,7 @@ pub fn parse(program: &str) -> Vec<Instructions> {
 }
 
 // Here's where the magic happens. With the course of action extracted with the parse() function, the only thing that is left to do is to take the appropriate action given an instruction
+// Returns the number of executed instructions
 pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> usize {
     // Variable to keep track of how many instructions were performed
     let mut actions: usize = 0;

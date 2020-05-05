@@ -16,6 +16,7 @@ $ cargo build --release # Build the project in release mode. Omitting the --rele
 - Cells are unsigned 8-bit wrapping integers.
 - The starting memory index is 0.
 - Reserved memory is heap allocated and its size is fixed by the -m option.
+- Trying to access an out of bounds address is defined behavior and, therefore, safe.
 - Regarding optimization level (-O option), the options are:
   * 0: No optimizations performed.
   * 1: Repeated operations grouped when possible (e.g. +++ becomes a single operation that adds 3). This is the default.

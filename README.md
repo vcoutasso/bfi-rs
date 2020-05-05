@@ -1,6 +1,6 @@
 # bf-rs
 
-A simple brainfuck interpreter written in Rust.
+A simple yet efficient brainfuck interpreter written in Rust.
 
 ## Build instructions
 

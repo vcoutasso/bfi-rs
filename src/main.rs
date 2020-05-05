@@ -33,19 +33,19 @@ fn main() {
             Arg::with_name("verbose")
                 .short("v")
                 .long("verbose")
-                .help("Prints the amount of instructions executed and total time spent (parsing + execution)"),
+                .help("Prints info about the execution time and instructions count"),
         )
         .arg(
             Arg::with_name("dump_memory")
                 .short("d")
                 .long("dump")
-                .help("Prints the state of the reserved memory after the execution")
+                .help("Prints the state of the reserved memory after the execution"),
         )
         .arg(
             Arg::with_name("list_instructions")
                 .short("l")
                 .long("list")
-                .help("Prints the instructions executed")
+                .help("Prints the instructions executed"),
         )
         .get_matches();
 

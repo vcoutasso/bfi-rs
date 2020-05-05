@@ -1,4 +1,3 @@
-use std::collections::VecDeque;
 use std::io::{self, Read};
 use std::num::Wrapping;
 
@@ -15,13 +14,16 @@ pub enum Instructions {
     EndLoop,                 // Loop end
     ReadChar,                // Read char from stdin
     PrintChar,               // Print value as char to stdout
+    // Instructions below this comment do not belong to bf and are here for optimization purposes
+    SetZero, // Equivalent to [-] (set current cell to 0), but in one instruction
 }
 
-// Translates the code from a string of chars to a Vec of Instructions to be later matched against properly in run(). Returns a vector with the instructions in the order that they appear, but grouped where appropriate
+// Translates the code from a string of chars to a Vec of Instructions to be later matched against properly in run(). Returns a vector with the instructions in the order that they appear, but with some optimizations
 pub fn parse(program: &str) -> Vec<Instructions> {
     // Raw instructions extracted from program
     let mut instructions: Vec<Instructions> = vec![];
 
+    // Extract original instructions
     for ch in program.trim().chars() {
         match ch {
             '>' => instructions.push(IncrementPointer(1)),
@@ -36,6 +38,9 @@ pub fn parse(program: &str) -> Vec<Instructions> {
             _ => continue,
         }
     }
+
+    // Replaces all the occurrences of set_zero for the equivalent and more efficient Instruction::SetZero
+    let set_zero = [BeginLoop, DecrementValue(1), EndLoop];
 
     // This vector contains all instructions in their optimized form (grouped)
     let mut optimized: Vec<Instructions> = vec![];
@@ -53,10 +58,22 @@ pub fn parse(program: &str) -> Vec<Instructions> {
     // e.g. ++ => IncrementValue(2)
     while i < instructions.len() {
         let mut acc = 1;
+
+        // If groupable, create an equivalent instruction
         if groupable.contains(&instructions[i]) {
             while Some(&instructions[i]) == instructions[i + acc..].iter().next() {
                 acc += 1;
             }
+        }
+        // Check if the next 3 instructions are equivalent to SetZero and if so, use it instead
+        else if instructions[i] == BeginLoop
+            && i + set_zero.len() < instructions.len() // If the slice is not out of bounds
+            && instructions[i..i + set_zero.len()] == set_zero
+        // Check if it is equivalent to SetZero
+        {
+            optimized.push(SetZero);
+            i += set_zero.len(); // Skip instructions we don't need anymore
+            continue; // All done here, go to next
         }
 
         // Doesn't look very pretty, but it gets the job done
@@ -81,16 +98,16 @@ pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> 
     let mut i = 0;
 
     // Indexes of begin loops to keep track of nested loops. Only used to fill jump
-    let mut begin: VecDeque<usize> = VecDeque::new();
+    let mut stack: Vec<usize> = Vec::new();
     // Vec with indexes of jumps to be made during execution (loops)
     let mut jump: Vec<usize> = vec![0; inst.len()];
 
     // This takes care of nested loops and how the interpreter should deal to them. jump will be filled with the indexes to perform the appropriate jumps at appropriate times
     for i in 0..inst.len() {
         match inst[i] {
-            BeginLoop => begin.push_back(i),
+            BeginLoop => stack.push(i),
             EndLoop => {
-                let index = begin.pop_back().expect("Could not find matching '['"); // Index of most recent loop
+                let index = stack.pop().expect("Could not find matching '['"); // Index of most recent loop
                 jump[i] = index; // When code reaches the ith instruction, go to index and continue from there
                 jump[index] = i; // When index is reached, go back to the start of the loop
             }
@@ -105,7 +122,6 @@ pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> 
             IncrementPointer(qty) => {
                 idx += qty;
                 idx %= data.len();
-                actions += qty - 1; // Add the equivalent amount of instructions followed minus one (the last one is added after the match statement)
             }
             // If idx is equal to the first position, go to the last
             DecrementPointer(qty) => {
@@ -114,15 +130,12 @@ pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> 
                 } else {
                     idx -= qty;
                 }
-                actions += qty - 1;
             }
             IncrementValue(qty) => {
                 data[idx] += Wrapping(qty as u8);
-                actions += qty - 1;
             }
             DecrementValue(qty) => {
                 data[idx] -= Wrapping(qty as u8);
-                actions += qty - 1;
             }
             BeginLoop => {
                 if data[idx] == Wrapping(0) {
@@ -143,6 +156,7 @@ pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> 
                 None => eprintln!("Could not read from stdin"),
             },
             PrintChar => print!("{}", char::from(data[idx].0)),
+            SetZero => data[idx] = Wrapping(0),
         }
         actions += 1;
         i += 1;

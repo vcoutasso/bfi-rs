@@ -1,4 +1,5 @@
-use std::io::{self, Read};
+use std::fs::File;
+use std::io::{self, Read, Write};
 use std::num::Wrapping;
 
 use Instructions::*;
@@ -95,8 +96,8 @@ pub fn parse(program: &str, opt_level: i32) -> Vec<Instructions> {
 }
 
 // Here's where the magic happens. With the course of action extracted with the parse() function, the only thing that is left to do is to take the appropriate action given an instruction
-// Returns the number of executed instructions
-pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> usize {
+// Returns the number of executed instructions and the index the pointer points at
+pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> (usize, usize) {
     // Variable to keep track of how many instructions were performed
     let mut actions: usize = 0;
     // Counter
@@ -166,5 +167,42 @@ pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> 
         actions += 1;
         i += 1;
     }
-    actions
+    (actions, idx)
+}
+
+// Dump memory to file
+pub fn dump_mem(memory: &[Wrapping<u8>], filename: &str, addr: usize) -> io::Result<()> {
+    let mut f = File::create(filename)?;
+    let step = 12;
+
+    f.write_all(format!("Pointer pointing at address 0x{:04X}\n\n", addr).as_bytes())?;
+
+    for i in (0..memory.len()).step_by(step) {
+        f.write_all(format!("0x{:04X}: \t", i).as_bytes())?;
+
+        for value in memory.iter().skip(i).take(step) {
+            f.write_all(format!("0x{:02X} \t", value).as_bytes())?;
+        }
+
+        for value in memory.iter().skip(i).take(step) {
+            if value.0.is_ascii_graphic() {
+                f.write_all(format!("{}", value.0 as char).as_bytes())?;
+            } else {
+                f.write_all(b".")?;
+            }
+        }
+
+        f.write_all(b"\n")?;
+    }
+
+    Ok(())
+}
+
+// Dump instructions to file
+pub fn dump_inst(instructions: &[Instructions], filename: &str) -> io::Result<()> {
+    let mut f = File::create(filename)?;
+
+    f.write_all(format!("{:#?}", instructions).as_bytes())?;
+
+    Ok(())
 }

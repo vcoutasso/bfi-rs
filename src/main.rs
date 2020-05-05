@@ -37,15 +37,17 @@ fn main() {
         )
         .arg(
             Arg::with_name("dump_memory")
-                .short("d")
-                .long("dump")
-                .help("Prints the state of the reserved memory after the execution"),
+                .long("dump_mem")
+                .takes_value(true)
+                .value_name("FILENAME")
+                .help("Dumps the memory contents to file after execution finishes"),
         )
         .arg(
-            Arg::with_name("list_instructions")
-                .short("l")
-                .long("list")
-                .help("Prints the instructions executed"),
+            Arg::with_name("dump_instructions")
+                .long("dump_inst")
+                .takes_value(true)
+                .value_name("FILENAME")
+                .help("Dumps the set of instructions to file after execution finishes"),
         )
         .arg(
             Arg::with_name("optimization_level")
@@ -84,7 +86,7 @@ fn main() {
 
     let instructions = bf::parse(&program, opt_level);
 
-    let count_instructions = bf::run(&instructions, &mut data, 0usize);
+    let (count_instructions, address) = bf::run(&instructions, &mut data, 0usize);
 
     if matches.occurrences_of("verbose") > 0 {
         println!(
@@ -93,10 +95,23 @@ fn main() {
             now.elapsed().as_secs_f32(),
         );
     }
-    if matches.occurrences_of("list_instructions") > 0 {
-        println!("\nList of instructions:\n{:?}", instructions);
+    if matches.occurrences_of("dump_instructions") > 0 {
+        match bf::dump_inst(
+            &instructions,
+            matches.value_of("dump_instructions").unwrap(),
+        ) {
+            Ok(_) => (),
+            Err(err) => {
+                eprintln!("Coult not dump instructions to file: {}", err);
+            }
+        }
     }
     if matches.occurrences_of("dump_memory") > 0 {
-        println!("\nMemory dump:\n{:?}", data);
+        match bf::dump_mem(&data, matches.value_of("dump_memory").unwrap(), address) {
+            Ok(_) => (),
+            Err(err) => {
+                eprintln!("Coult not dump memory contents to file: {}", err);
+            }
+        }
     }
 }

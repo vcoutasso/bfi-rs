@@ -10,7 +10,7 @@ fn main() {
     let now = Instant::now();
 
     let matches = App::new("rust-bf")
-        .version("0.1.0")
+        .version("0.2.0")
         .author("Vinícius Couto <vinicouto12@gmail.com>")
         .about("A simple interpreter for the brainfuck programming language")
         .arg(
@@ -33,8 +33,19 @@ fn main() {
             Arg::with_name("verbose")
                 .short("v")
                 .long("verbose")
-                .multiple(true)
-                .help("Be verbose"),
+                .help("Prints the amount of instructions executed and total time spent (parsing + execution)"),
+        )
+        .arg(
+            Arg::with_name("dump_memory")
+                .short("d")
+                .long("dump")
+                .help("Prints the state of the reserved memory after the execution")
+        )
+        .arg(
+            Arg::with_name("list_instructions")
+                .short("l")
+                .long("list")
+                .help("Prints the instructions executed")
         )
         .get_matches();
 
@@ -66,7 +77,10 @@ fn main() {
             now.elapsed().as_secs_f32(),
         );
     }
-    if matches.occurrences_of("verbose") > 1 {
+    if matches.occurrences_of("list_instructions") > 0 {
         println!("\nList of instructions:\n{:?}", instructions);
+    }
+    if matches.occurrences_of("dump_memory") > 0 {
+        println!("\nMemory dump:\n{:?}", data);
     }
 }

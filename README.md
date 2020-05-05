@@ -1,4 +1,4 @@
-# rust-bf
+# bf-rs
 
 A simple brainfuck interpreter written in Rust.
 

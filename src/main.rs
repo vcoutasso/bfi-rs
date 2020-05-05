@@ -1,5 +1,7 @@
 use clap::{App, Arg};
 
+use num_format::{Locale, ToFormattedString};
+
 use std::num::Wrapping;
 use std::time::Instant;
 use std::{fs, process};
@@ -31,6 +33,7 @@ fn main() {
             Arg::with_name("verbose")
                 .short("v")
                 .long("verbose")
+                .multiple(true)
                 .help("Be verbose"),
         )
         .get_matches();
@@ -56,11 +59,14 @@ fn main() {
 
     let count_instructions = bf::run(&instructions, &mut data, 0usize);
 
-    if matches.occurrences_of("verbose") == 1 {
+    if matches.occurrences_of("verbose") > 0 {
         println!(
-            "\nFinished {} instructions in {} ms",
-            count_instructions,
-            now.elapsed().as_millis()
+            "\nFinished {} instructions in {:.4}s",
+            count_instructions.to_formatted_string(&Locale::pt),
+            now.elapsed().as_secs_f32(),
         );
+    }
+    if matches.occurrences_of("verbose") > 1 {
+        println!("\nList of instructions:\n{:?}", instructions);
     }
 }

@@ -2,10 +2,10 @@ use clap::{App, Arg};
 
 use num_format::{Locale, ToFormattedString};
 
-use std::num::Wrapping;
-use std::time::Instant;
 use std::fs::{self, File};
+use std::num::Wrapping;
 use std::path::Path;
+use std::time::Instant;
 
 fn main() {
     // Get current time to measure total time taken to finish the execution
@@ -64,13 +64,24 @@ fn main() {
         .get_matches();
 
     // Quantity of reserved bytes
-    let memory_amount: usize = matches.value_of("memory").unwrap().parse().expect("Error parsing arguments");
+    let memory_amount: usize = matches
+        .value_of("memory")
+        .unwrap()
+        .parse()
+        .expect("Error parsing arguments");
 
     // value_of_os allows for unicode characters
     let filename = matches.value_of_os("filename").unwrap();
 
     // The all mighty memory that will be used during runtime
     let mut memory: Vec<Wrapping<u8>> = vec![Wrapping(0); memory_amount];
+
+    // Verbose flag
+    let verbose = matches.occurrences_of("verbose") == 1;
+
+    if verbose {
+        println!("Reading contents of program file..")
+    };
 
     // Original raw program string
     let program = fs::read_to_string(filename).expect("Error reading file");
@@ -82,14 +93,23 @@ fn main() {
         .parse()
         .unwrap();
 
+    if verbose {
+        println!("Parsing list of instructions..")
+    }
+
     // List of raw instructions parsed from program
-    let instructions = bf::parse(&program, opt_level);
+    let instructions = bf::parse(&program, opt_level, verbose);
+
+    // Print a new line to separate verbose output from the program output
+    if verbose {
+        println!()
+    }
 
     // Return values are amount of actions taken (instructions) and address that the pseudo_pointer is currently pointing at
     let (count_instructions, address) = bf::run(&instructions, &mut memory, 0usize);
 
     // If flag verbose
-    if matches.occurrences_of("verbose") == 1 {
+    if verbose {
         println!(
             "\nFinished {} instructions in {:.4}s",
             count_instructions.to_formatted_string(&Locale::pt),
@@ -102,10 +122,7 @@ fn main() {
         let output_path = Path::new(matches.value_of("dump_instructions").unwrap());
         let file = File::create(output_path).expect("Could not create output file");
 
-        match bf::dump_inst(
-            &instructions,
-            file,
-        ) {
+        match bf::dump_inst(&instructions, file) {
             Ok(_) => (),
             Err(err) => {
                 eprintln!("Coult not dump instructions to file: {}", err);

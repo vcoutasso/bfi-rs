@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{self, Read, Write, BufWriter};
+use std::io::{self, BufWriter, Read, Write};
 use std::num::Wrapping;
 
 use Instructions::*;
@@ -30,8 +30,7 @@ pub enum Instructions {
 }
 
 /// Translates the code from a string of chars to a Vec of Instructions to be later matched against properly in run(). Returns a vector with the instructions in the order that they appear, but with some optimizations
-pub fn parse(program: &str, opt_level: i32) -> Vec<Instructions> {
-
+pub fn parse(program: &str, opt_level: i32, verbose: bool) -> Vec<Instructions> {
     // Extract original instructions
     let instructions: Vec<_> = program
         .trim()
@@ -49,6 +48,13 @@ pub fn parse(program: &str, opt_level: i32) -> Vec<Instructions> {
             _ => None,
         })
         .collect();
+
+    if verbose {
+        println!(
+            "Original set of instructions contains {} operators",
+            instructions.len()
+        )
+    }
 
     if opt_level > 0 {
         // Replaces all the occurrences of set_zero for the equivalent and more efficient Instruction::SetZero
@@ -83,7 +89,7 @@ pub fn parse(program: &str, opt_level: i32) -> Vec<Instructions> {
             else if opt_level > 1
             && instructions[i] == BeginLoop
             && i + set_zero.len() < instructions.len() // If the slice is not out of bounds
-            && instructions[..set_zero.len()] == set_zero
+            && instructions[i..i+set_zero.len()] == set_zero
             // Check if it is equivalent to SetZero
             {
                 optimized.push(SetZero);
@@ -100,6 +106,12 @@ pub fn parse(program: &str, opt_level: i32) -> Vec<Instructions> {
                 _ => instructions[i],
             });
             i += acc;
+        }
+        if verbose {
+            println!(
+                "Optimized set of instructions contains {} operators",
+                optimized.len()
+            )
         }
         optimized
     } else {

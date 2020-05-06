@@ -177,14 +177,11 @@ pub fn run(inst: &[Instructions], memory: &mut [Wrapping<u8>], mut idx: usize) -
                     i = jump[i];
                 }
             }
-            ReadChar => match io::stdin().bytes().next() {
-                Some(res) => {
-                    if let Ok(value) = res {
-                        memory[idx] = Wrapping(value)
-                    }
+            ReadChar => {
+                if let Ok(ch) = io::stdin().bytes().next().expect("Could not read char") {
+                    memory[idx] = Wrapping(ch)
                 }
-                None => eprintln!("Could not read from stdin"),
-            },
+            }
             PrintChar => print!("{}", char::from(memory[idx].0)),
             SetZero => memory[idx] = Wrapping(0),
         }

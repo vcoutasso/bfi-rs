@@ -96,7 +96,7 @@ pub fn parse(program: &str, opt_level: i32, verbose: bool) -> Vec<Instructions> 
                     remaining = leftover;
                 }
 
-                // This is the case where the enum variant does not hold any value and it simply gets added to optimization (there is nothing else to do with it)
+                // This is the case where the enum variant does not hold any value and it simply gets added to optimized (there is nothing else to do with it)
                 // cur_instruction equals to None again because this reaching arm means that there is no grouping of instructions happening right now, but they might occur again in the next instructions
                 // Hence the need to reset the variable value to None
                 (Some(op), _) => {

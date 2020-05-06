@@ -11,6 +11,16 @@ $ git clone https://github.com/vcoutasso/rust-bf ; cd rust-bf # Clone the git re
 $ cargo build --release # Build the project in release mode. Omitting the --release flag will build in debug mode
 ```
 
+## Usage 
+
+``` sh
+bf <FILENAME> --memory <BYTES> --optimization <optimization_level>
+```
+
+The executable can also be called by `cargo run --release` (the `--release` flag is optional but recommended for better performance). It expects a path to the brainfuck program file, which will be read and executed.
+
+The level of optimization and the amount of memory reserved can is configurable through their respective flags and bf will output to stdout by default.
+
 ## Implementation details
 
 - Cells are unsigned 8-bit wrapping integers.

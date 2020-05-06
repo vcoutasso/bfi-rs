@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{self, Read, Write};
+use std::io::{self, Read, Write, BufWriter};
 use std::num::Wrapping;
 
 use Instructions::*;
@@ -56,6 +56,7 @@ pub fn parse(program: &str, opt_level: i32) -> Vec<Instructions> {
 
         // This vector contains all instructions in their optimized form (grouped)
         let mut optimized: Vec<Instructions> = vec![];
+
         // This slice represents the enum variants that can be grouped together
         let groupable = [
             IncrementPointer(1),
@@ -63,6 +64,7 @@ pub fn parse(program: &str, opt_level: i32) -> Vec<Instructions> {
             IncrementValue(1),
             DecrementValue(1),
         ];
+
         // Counter
         let mut i = 0;
 
@@ -107,7 +109,7 @@ pub fn parse(program: &str, opt_level: i32) -> Vec<Instructions> {
 
 /// Here's where the magic happens. With the course of action extracted with the parse() function, the only thing that is left to do is to take the appropriate action given an instruction
 /// Returns the number of executed instructions and the index the pointer points at
-pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> (usize, usize) {
+pub fn run(inst: &[Instructions], memory: &mut [Wrapping<u8>], mut idx: usize) -> (usize, usize) {
     // Variable to keep track of how many instructions were performed
     let mut actions: usize = 0;
     // Counter
@@ -118,7 +120,7 @@ pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> 
     // Vec with indexes of jumps to be made during execution (loops)
     let mut jump: Vec<usize> = vec![0; inst.len()];
 
-    // This takes care of nested loops and how the interpreter should deal to them. jump will be filled with the indexes to perform the appropriate jumps at appropriate times
+    // This takes care of nested loops and how the interpreter should deal with them. jump will be filled with the indexes to perform the appropriate jumps at appropriate times
     for (i, instruction) in inst.iter().enumerate() {
         match instruction {
             BeginLoop => stack.push(i),
@@ -137,42 +139,42 @@ pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> 
             // If idx is equal to the last position, return to the first
             IncrementPointer(qty) => {
                 idx += qty;
-                idx %= data.len();
+                idx %= memory.len();
             }
             // If idx is equal to the first position, go to the last
             DecrementPointer(qty) => {
                 if qty > idx {
-                    idx = data.len() - (qty - idx);
+                    idx = memory.len() - (qty - idx);
                 } else {
                     idx -= qty;
                 }
             }
             IncrementValue(qty) => {
-                data[idx] += Wrapping(qty as u8);
+                memory[idx] += Wrapping(qty as u8);
             }
             DecrementValue(qty) => {
-                data[idx] -= Wrapping(qty as u8);
+                memory[idx] -= Wrapping(qty as u8);
             }
             BeginLoop => {
-                if data[idx] == Wrapping(0) {
+                if memory[idx] == Wrapping(0) {
                     i = jump[i];
                 }
             }
             EndLoop => {
-                if data[idx] != Wrapping(0) {
+                if memory[idx] != Wrapping(0) {
                     i = jump[i];
                 }
             }
             ReadChar => match io::stdin().bytes().next() {
                 Some(res) => {
                     if let Ok(value) = res {
-                        data[idx] = Wrapping(value)
+                        memory[idx] = Wrapping(value)
                     }
                 }
                 None => eprintln!("Could not read from stdin"),
             },
-            PrintChar => print!("{}", char::from(data[idx].0)),
-            SetZero => data[idx] = Wrapping(0),
+            PrintChar => print!("{}", char::from(memory[idx].0)),
+            SetZero => memory[idx] = Wrapping(0),
         }
         actions += 1;
         i += 1;
@@ -181,45 +183,48 @@ pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> 
 }
 
 /// Dump memory to file
-pub fn dump_mem(memory: &[Wrapping<u8>], filename: &str, addr: usize) -> io::Result<()> {
-    let mut f = File::create(filename)?;
+pub fn dump_mem(memory: &[Wrapping<u8>], file: File, addr: usize) -> io::Result<()> {
+    // Buffer the output
+    let mut buf = BufWriter::new(file);
+
+    // Quantity of bytes (different memory positions) per line
     let step = 12;
 
-    f.write_all(format!("Pointer pointing at address 0x{:04X}\n\n", addr).as_bytes())?;
+    buf.write_all(format!("Pointer pointing at address 0x{:04X}\n\n", addr).as_bytes())?;
 
     for i in (0..memory.len()).step_by(step) {
-        f.write_all(format!("0x{:04X}: \t", i).as_bytes())?;
+        buf.write_all(format!("0x{:04X}: \t", i).as_bytes())?;
 
         for value in memory.iter().skip(i).take(step) {
-            f.write_all(format!("0x{:02X} \t", value).as_bytes())?;
+            buf.write_all(format!("0x{:02X} \t", value).as_bytes())?;
         }
 
         // Format last line properly if it is shorter than the previous ones
         if i + step > memory.len() {
             for _ in 0..(step - (memory.len() % step)) {
-                f.write_all(b"\t")?;
+                buf.write_all(b"\t")?;
             }
         }
 
         for value in memory.iter().skip(i).take(step) {
             if value.0.is_ascii_graphic() {
-                f.write_all(format!("{}", value.0 as char).as_bytes())?;
+                buf.write_all(format!("{}", value.0 as char).as_bytes())?;
             } else {
-                f.write_all(b".")?;
+                buf.write_all(b".")?;
             }
         }
 
-        f.write_all(b"\n")?;
+        buf.write_all(b"\n")?;
     }
+    // Flush entire buffer at once
+    buf.flush().unwrap();
 
     Ok(())
 }
 
 /// Dump instructions to file
-pub fn dump_inst(instructions: &[Instructions], filename: &str) -> io::Result<()> {
-    let mut f = File::create(filename)?;
-
-    f.write_all(format!("{:#?}", instructions).as_bytes())?;
+pub fn dump_inst(instructions: &[Instructions], mut file: File) -> io::Result<()> {
+    file.write_all(format!("{:#?}", instructions).as_bytes())?;
 
     Ok(())
 }

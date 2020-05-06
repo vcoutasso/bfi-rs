@@ -4,41 +4,51 @@ use std::num::Wrapping;
 
 use Instructions::*;
 
-#[derive(Debug, PartialEq, Clone)]
-// The tuple enum variants hold a value that represents how many times the instruction should be repeated. This overcomes the overhead of repeating the same task over and over in the form of 'unit operations'
+/// The tuple enum variants hold a value that represents how many times the instruction should be repeated. This overcomes the overhead of repeating the same task over and over in the form of 'unit operations'
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Instructions {
-    IncrementPointer(usize), // Next pointer
-    DecrementPointer(usize), // Previous pointer
-    IncrementValue(usize),   // value++
-    DecrementValue(usize),   // value--
-    BeginLoop,               // Loop start
-    EndLoop,                 // Loop end
-    ReadChar,                // Read char from stdin
-    PrintChar,               // Print value as char to stdout
-    // Instructions below this comment do not belong to bf and are here for optimization purposes
-    SetZero, // Equivalent to [-] (set current cell to 0), but in one instruction
+    /// Next pointer
+    IncrementPointer(usize),
+    /// Previous pointer
+    DecrementPointer(usize),
+    /// Increment data
+    IncrementValue(usize),
+    /// Decrement data
+    DecrementValue(usize),
+    /// Loop start
+    BeginLoop,
+    /// Loop end
+    EndLoop,
+    /// Read char from stdin
+    ReadChar,
+    /// Print value as char to stdout
+    PrintChar,
+    /// The folowing Instructions do not belong to bf and are here solely for optimization purposes
+    ///
+    /// Equivalent to [-] (set current cell to 0), but in one instruction
+    SetZero,
 }
 
-// Translates the code from a string of chars to a Vec of Instructions to be later matched against properly in run(). Returns a vector with the instructions in the order that they appear, but with some optimizations
+/// Translates the code from a string of chars to a Vec of Instructions to be later matched against properly in run(). Returns a vector with the instructions in the order that they appear, but with some optimizations
 pub fn parse(program: &str, opt_level: i32) -> Vec<Instructions> {
-    // Raw instructions extracted from program
-    let mut instructions: Vec<Instructions> = vec![];
 
     // Extract original instructions
-    for ch in program.trim().chars() {
-        match ch {
-            '>' => instructions.push(IncrementPointer(1)),
-            '<' => instructions.push(DecrementPointer(1)),
-            '+' => instructions.push(IncrementValue(1)),
-            '-' => instructions.push(DecrementValue(1)),
-            '[' => instructions.push(BeginLoop),
-            ']' => instructions.push(EndLoop),
-            ',' => instructions.push(ReadChar),
-            '.' => instructions.push(PrintChar),
+    let instructions: Vec<_> = program
+        .trim()
+        .chars()
+        .filter_map(|ch| match ch {
+            '>' => Some(IncrementPointer(1)),
+            '<' => Some(DecrementPointer(1)),
+            '+' => Some(IncrementValue(1)),
+            '-' => Some(DecrementValue(1)),
+            '[' => Some(BeginLoop),
+            ']' => Some(EndLoop),
+            ',' => Some(ReadChar),
+            '.' => Some(PrintChar),
             // Everything else is regarded as a comment
-            _ => continue,
-        }
-    }
+            _ => None,
+        })
+        .collect();
 
     if opt_level > 0 {
         // Replaces all the occurrences of set_zero for the equivalent and more efficient Instruction::SetZero
@@ -63,7 +73,7 @@ pub fn parse(program: &str, opt_level: i32) -> Vec<Instructions> {
 
             // If groupable, create an equivalent instruction
             if groupable.contains(&instructions[i]) {
-                while Some(&instructions[i]) == instructions[i + acc..].iter().next() {
+                while Some(&instructions[i]) == instructions.get(i + acc) {
                     acc += 1;
                 }
             }
@@ -71,7 +81,7 @@ pub fn parse(program: &str, opt_level: i32) -> Vec<Instructions> {
             else if opt_level > 1
             && instructions[i] == BeginLoop
             && i + set_zero.len() < instructions.len() // If the slice is not out of bounds
-            && instructions[i..i + set_zero.len()] == set_zero
+            && instructions[..set_zero.len()] == set_zero
             // Check if it is equivalent to SetZero
             {
                 optimized.push(SetZero);
@@ -80,13 +90,13 @@ pub fn parse(program: &str, opt_level: i32) -> Vec<Instructions> {
             }
 
             // Doesn't look very pretty, but it gets the job done
-            match instructions[i] {
-                IncrementPointer(_) => optimized.push(IncrementPointer(acc)),
-                DecrementPointer(_) => optimized.push(DecrementPointer(acc)),
-                IncrementValue(_) => optimized.push(IncrementValue(acc)),
-                DecrementValue(_) => optimized.push(DecrementValue(acc)),
-                _ => optimized.push(instructions[i].clone()),
-            }
+            optimized.push(match instructions[i] {
+                IncrementPointer(_) => IncrementPointer(acc),
+                DecrementPointer(_) => DecrementPointer(acc),
+                IncrementValue(_) => IncrementValue(acc),
+                DecrementValue(_) => DecrementValue(acc),
+                _ => instructions[i],
+            });
             i += acc;
         }
         optimized
@@ -95,8 +105,8 @@ pub fn parse(program: &str, opt_level: i32) -> Vec<Instructions> {
     }
 }
 
-// Here's where the magic happens. With the course of action extracted with the parse() function, the only thing that is left to do is to take the appropriate action given an instruction
-// Returns the number of executed instructions and the index the pointer points at
+/// Here's where the magic happens. With the course of action extracted with the parse() function, the only thing that is left to do is to take the appropriate action given an instruction
+/// Returns the number of executed instructions and the index the pointer points at
 pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> (usize, usize) {
     // Variable to keep track of how many instructions were performed
     let mut actions: usize = 0;
@@ -108,16 +118,16 @@ pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> 
     // Vec with indexes of jumps to be made during execution (loops)
     let mut jump: Vec<usize> = vec![0; inst.len()];
 
-    // This takes care of nested loops and how the interpreter should deal with them. jump will be filled with the indexes to perform the appropriate jumps at appropriate times
-    for i in 0..inst.len() {
-        match inst[i] {
+    // This takes care of nested loops and how the interpreter should deal to them. jump will be filled with the indexes to perform the appropriate jumps at appropriate times
+    for (i, instruction) in inst.iter().enumerate() {
+        match instruction {
             BeginLoop => stack.push(i),
             EndLoop => {
                 let index = stack.pop().expect("Could not find matching '['"); // Index of most recent loop
                 jump[i] = index; // When code reaches the ith instruction, go to index and continue from there
                 jump[index] = i; // When index is reached, go back to the start of the loop
             }
-            _ => continue,
+            _ => (),
         }
     }
 
@@ -170,7 +180,7 @@ pub fn run(inst: &[Instructions], data: &mut [Wrapping<u8>], mut idx: usize) -> 
     (actions, idx)
 }
 
-// Dump memory to file
+/// Dump memory to file
 pub fn dump_mem(memory: &[Wrapping<u8>], filename: &str, addr: usize) -> io::Result<()> {
     let mut f = File::create(filename)?;
     let step = 12;
@@ -186,7 +196,7 @@ pub fn dump_mem(memory: &[Wrapping<u8>], filename: &str, addr: usize) -> io::Res
 
         // Format last line properly if it is shorter than the previous ones
         if i + step > memory.len() {
-            for _j in 0..(step - (memory.len()%step)) {
+            for _ in 0..(step - (memory.len() % step)) {
                 f.write_all(b"\t")?;
             }
         }
@@ -205,7 +215,7 @@ pub fn dump_mem(memory: &[Wrapping<u8>], filename: &str, addr: usize) -> io::Res
     Ok(())
 }
 
-// Dump instructions to file
+/// Dump instructions to file
 pub fn dump_inst(instructions: &[Instructions], filename: &str) -> io::Result<()> {
     let mut f = File::create(filename)?;
 

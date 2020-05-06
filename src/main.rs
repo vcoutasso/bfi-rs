@@ -126,7 +126,7 @@ fn main() {
         match bf::dump_inst(&instructions, file) {
             Ok(_) => (),
             Err(err) => {
-                eprintln!("Coult not dump instructions to file: {}", err);
+                eprintln!("Could not dump instructions to file: {}", err);
             }
         }
     }
@@ -139,7 +139,7 @@ fn main() {
         match bf::dump_mem(&memory, file, address) {
             Ok(_) => (),
             Err(err) => {
-                eprintln!("Coult not dump memory contents to file: {}", err);
+                eprintln!("Could not dump memory contents to file: {}", err);
             }
         }
     }

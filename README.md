@@ -7,7 +7,7 @@ A simple yet efficient brainfuck interpreter written in Rust.
 Note: Rust toolchain required
 
 ``` sh
-$ git clone https://github.com/vcoutasso/rust-bf ; cd rust-bf # Clone the git repository and cd into the directory
+$ git clone https://github.com/vcoutasso/bf-rs ; cd bf-rs # Clone the git repository and cd into the directory
 $ cargo build --release # Build the project in release mode. Omitting the --release flag will build in debug mode
 ```
 

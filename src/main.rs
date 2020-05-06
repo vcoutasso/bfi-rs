@@ -57,6 +57,7 @@ fn main() {
                 .short("O")
                 .long("optimization")
                 .takes_value(true)
+                .value_name("LEVEL")
                 .default_value("1")
                 .possible_values(&["0", "1", "2"])
                 .help("Optimization level"),

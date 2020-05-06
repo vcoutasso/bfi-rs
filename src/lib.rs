@@ -57,56 +57,55 @@ pub fn parse(program: &str, opt_level: i32, verbose: bool) -> Vec<Instructions> 
     }
 
     if opt_level > 0 {
-        // Replaces all the occurrences of set_zero for the equivalent and more efficient Instruction::SetZero
-        let set_zero = [BeginLoop, DecrementValue(1), EndLoop];
-
         // This vector contains all instructions in their optimized form (grouped)
         let mut optimized: Vec<Instructions> = vec![];
 
-        // This slice represents the enum variants that can be grouped together
-        let groupable = [
-            IncrementPointer(1),
-            DecrementPointer(1),
-            IncrementValue(1),
-            DecrementValue(1),
-        ];
+        // Instructions left to check
+        let mut remaining = instructions.as_slice();
+        // Current instruction
+        let mut cur_instruction: Option<Instructions> = None;
 
-        // Counter
-        let mut i = 0;
+        loop {
+            match (&mut cur_instruction, remaining) {
+                // No more instructions to check, optimization is done. Exit the loop
+                (None, []) => break,
 
-        // Keep track of how many repeated groupable instructions are close together for later simplification
-        // e.g. ++ => IncrementValue(2)
-        while i < instructions.len() {
-            let mut acc = 1;
+                // If opt_level > 1, check for the pattern equivalent to SetZero
+                // If it matches, add to optimized set of instructions and update remaining
+                (None, [BeginLoop, DecrementValue(1), EndLoop, leftover @ ..]) if opt_level > 1 => {
+                    optimized.push(SetZero);
+                    remaining = leftover;
+                }
 
-            // If groupable, create an equivalent instruction
-            if groupable.contains(&instructions[i]) {
-                while Some(&instructions[i]) == instructions.get(i + acc) {
-                    acc += 1;
+                // When cur_instruction != None, the next arm will look for equivalent instructions but increment the value that the current one holds, to avoid duplications and improve performance
+                // What this arm does is add the first instruction (new cur_instruction) so the next arm can match against it
+                // Again, update remaining
+                (None, [x, leftover @ ..]) => {
+                    cur_instruction = Some(*x);
+                    remaining = leftover;
+                }
+
+                // As described above. The Some() bit refers to cur_instruction with cur_val being the value it holds (how many times it will repeat)
+                // x is the value the next repeating instruction holds (pretty sure it will always be 1, but leaving the x there is probably safer)
+                // Once again update remaining
+                (Some(IncrementPointer(cur_val)), [IncrementPointer(x), leftover @ ..])
+                | (Some(DecrementPointer(cur_val)), [DecrementPointer(x), leftover @ ..])
+                | (Some(IncrementValue(cur_val)), [IncrementValue(x), leftover @ ..])
+                | (Some(DecrementValue(cur_val)), [DecrementValue(x), leftover @ ..]) => {
+                    *cur_val += *x;
+                    remaining = leftover;
+                }
+
+                // This is the case where the enum variant does not hold any value and it simply gets added to optimization (there is nothing else to do with it)
+                // cur_instruction equals to None again because this reaching arm means that there is no grouping of instructions happening right now, but they might occur again in the next instructions
+                // Hence the need to reset the variable value to None
+                (Some(op), _) => {
+                    optimized.push(*op);
+                    cur_instruction = None;
                 }
             }
-            // Check if the next 3 instructions are equivalent to SetZero and if so, use it instead
-            else if opt_level > 1
-            && instructions[i] == BeginLoop
-            && i + set_zero.len() < instructions.len() // If the slice is not out of bounds
-            && instructions[i..i+set_zero.len()] == set_zero
-            // Check if it is equivalent to SetZero
-            {
-                optimized.push(SetZero);
-                i += set_zero.len(); // Skip instructions we don't need anymore
-                continue; // All done here, go to next
-            }
-
-            // Doesn't look very pretty, but it gets the job done
-            optimized.push(match instructions[i] {
-                IncrementPointer(_) => IncrementPointer(acc),
-                DecrementPointer(_) => DecrementPointer(acc),
-                IncrementValue(_) => IncrementValue(acc),
-                DecrementValue(_) => DecrementValue(acc),
-                _ => instructions[i],
-            });
-            i += acc;
         }
+
         if verbose {
             println!(
                 "Optimized set of instructions contains {} operators",

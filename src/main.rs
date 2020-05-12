@@ -3,7 +3,6 @@ use clap::{App, Arg};
 use num_format::{Locale, ToFormattedString};
 
 use std::fs::{self, File};
-use std::num::Wrapping;
 use std::path::Path;
 use std::time::Instant;
 
@@ -75,7 +74,7 @@ fn main() {
     let filename = matches.value_of_os("filename").unwrap();
 
     // The all mighty memory that will be used during runtime
-    let mut memory: Vec<Wrapping<u8>> = vec![Wrapping(0); memory_amount];
+    let mut memory: Vec<u8> = vec![0; memory_amount];
 
     // Verbose flag
     let verbose = matches.occurrences_of("verbose") == 1;

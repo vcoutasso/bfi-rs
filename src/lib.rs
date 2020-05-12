@@ -1,6 +1,5 @@
 use std::fs::File;
 use std::io::{self, BufWriter, Read, Write};
-use std::num::Wrapping;
 
 use Instructions::*;
 
@@ -119,7 +118,7 @@ pub fn parse(program: &str, opt_level: i32, verbose: bool) -> Vec<Instructions> 
 
 /// Here's where the magic happens. With the course of action extracted with the parse() function, the only thing that is left to do is to take the appropriate action given an instruction
 /// Returns the number of executed instructions and the index the pointer points at
-pub fn run(inst: &[Instructions], memory: &mut [Wrapping<u8>], mut idx: usize) -> (usize, usize) {
+pub fn run(inst: &[Instructions], memory: &mut [u8], mut idx: usize) -> (usize, usize) {
     // Variable to keep track of how many instructions were performed
     let mut actions: usize = 0;
     // Counter
@@ -160,28 +159,28 @@ pub fn run(inst: &[Instructions], memory: &mut [Wrapping<u8>], mut idx: usize) -
                 }
             }
             IncrementValue(qty) => {
-                memory[idx] += Wrapping(qty as u8);
+                memory[idx] = memory[idx].wrapping_add(qty as u8);
             }
             DecrementValue(qty) => {
-                memory[idx] -= Wrapping(qty as u8);
+                memory[idx] = memory[idx].wrapping_sub(qty as u8);
             }
             BeginLoop => {
-                if memory[idx] == Wrapping(0) {
+                if memory[idx] == 0 {
                     i = jump[i];
                 }
             }
             EndLoop => {
-                if memory[idx] != Wrapping(0) {
+                if memory[idx] != 0 {
                     i = jump[i];
                 }
             }
             ReadChar => {
                 if let Ok(ch) = io::stdin().bytes().next().expect("Could not read char") {
-                    memory[idx] = Wrapping(ch)
+                    memory[idx] = ch
                 }
             }
-            PrintChar => print!("{}", char::from(memory[idx].0)),
-            SetZero => memory[idx] = Wrapping(0),
+            PrintChar => print!("{}", char::from(memory[idx])),
+            SetZero => memory[idx] = 0,
         }
         actions += 1;
         i += 1;
@@ -190,7 +189,7 @@ pub fn run(inst: &[Instructions], memory: &mut [Wrapping<u8>], mut idx: usize) -
 }
 
 /// Dump memory to file
-pub fn dump_mem(memory: &[Wrapping<u8>], file: File, addr: usize) -> io::Result<()> {
+pub fn dump_mem(memory: &[u8], file: File, addr: usize) -> io::Result<()> {
     // Buffer the output
     let mut buf = BufWriter::new(file);
 
@@ -214,8 +213,8 @@ pub fn dump_mem(memory: &[Wrapping<u8>], file: File, addr: usize) -> io::Result<
         }
 
         for value in memory.iter().skip(i).take(step) {
-            if value.0.is_ascii_graphic() {
-                buf.write_all(format!("{}", value.0 as char).as_bytes())?;
+            if value.is_ascii_graphic() {
+                buf.write_all(format!("{}", *value as char).as_bytes())?;
             } else {
                 buf.write_all(b".")?;
             }

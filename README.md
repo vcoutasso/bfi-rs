@@ -14,7 +14,7 @@ $ cargo build --release # Build the project in release mode. Omitting the --rele
 ## Usage 
 
 ``` sh
-bfi <FILENAME> --memory <BYTES> --optimization <LEVEL>
+bfi [FLAGS] [OPTIONS] <FILENAME>
 ```
 
 The executable can also be called by `cargo run --release` (the `--release` flag is optional but recommended for better performance). It expects a path to the brainfuck program file, which will be read and executed.

@@ -1,5 +1,5 @@
 [package]
-name = "bf"
+name = "bfi"
 version = "0.2.0"
 authors = ["Vinícius Couto <vinicouto12@gmail.com>"]
 edition = "2018"

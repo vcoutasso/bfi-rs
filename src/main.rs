@@ -11,7 +11,7 @@ fn main() {
     let now = Instant::now();
 
     // Info about the program and all possible options/flags
-    let matches = App::new("rust-bf")
+    let matches = App::new("bfi")
         .version("0.2.0")
         .author("Vinícius Couto <vinicouto12@gmail.com>")
         .about("A simple interpreter for the brainfuck programming language")
@@ -98,7 +98,7 @@ fn main() {
     }
 
     // List of raw instructions parsed from program
-    let instructions = bf::parse(&program, opt_level, verbose);
+    let instructions = bfi::parse(&program, opt_level, verbose);
 
     // Print a new line to separate verbose output from the program output
     if verbose {
@@ -106,7 +106,7 @@ fn main() {
     }
 
     // Return values are amount of actions taken (instructions) and address that the pseudo_pointer is currently pointing at
-    let (count_instructions, address) = bf::run(&instructions, &mut memory, 0usize);
+    let (count_instructions, address) = bfi::run(&instructions, &mut memory, 0usize);
 
     // If flag verbose
     if verbose {
@@ -122,7 +122,7 @@ fn main() {
         let output_path = Path::new(matches.value_of("dump_instructions").unwrap());
         let file = File::create(output_path).expect("Could not create output file");
 
-        match bf::dump_inst(&instructions, file) {
+        match bfi::dump_inst(&instructions, file) {
             Ok(_) => (),
             Err(err) => {
                 eprintln!("Could not dump instructions to file: {}", err);
@@ -135,7 +135,7 @@ fn main() {
         let output_path = Path::new(matches.value_of("dump_memory").unwrap());
         let file = File::create(output_path).expect("Could not create output file");
 
-        match bf::dump_mem(&memory, file, address) {
+        match bfi::dump_mem(&memory, file, address) {
             Ok(_) => (),
             Err(err) => {
                 eprintln!("Could not dump memory contents to file: {}", err);

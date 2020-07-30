@@ -8,7 +8,7 @@ use Instructions::*;
 pub enum Instructions {
     /// Increment pointer by x
     IncrementPointer(usize),
-    /// Decrement pointer by x 
+    /// Decrement pointer by x
     DecrementPointer(usize),
     /// Increment data by x
     IncrementValue(usize),
@@ -71,7 +71,7 @@ pub fn parse(program: &str, optimize: bool, verbose: bool) -> Vec<Instructions> 
 
                 // Check for the patterns equivalent to SetZero ([-] and [+])
                 // If it matches, add to optimized set of instructions and update remaining
-                (None, [BeginLoop, DecrementValue(1), EndLoop, leftover @ ..]) 
+                (None, [BeginLoop, DecrementValue(1), EndLoop, leftover @ ..])
                 | (None, [BeginLoop, IncrementValue(1), EndLoop, leftover @ ..]) => {
                     optimized.push(SetZero);
                     remaining = leftover;
@@ -176,7 +176,11 @@ pub fn run(inst: &[Instructions], memory: &mut [u8], mut idx: usize) -> (usize, 
                 }
             }
             ReadChar => {
-                if let Ok(ch) = io::stdin().bytes().next().expect("Could not read from stdin") {
+                if let Ok(ch) = io::stdin()
+                    .bytes()
+                    .next()
+                    .expect("Could not read from stdin")
+                {
                     memory[idx] = ch
                 }
             }

@@ -24,7 +24,7 @@ pub enum Instructions {
     PrintChar,
     /// The folowing Instructions do not belong to bf and are here solely for optimization purposes
     ///
-    /// Equivalent to [-] (set current cell to 0), but in one instruction
+    /// Equivalent to [-] and [+] (set current cell to 0), but in one instruction
     SetZero,
 }
 
@@ -71,7 +71,8 @@ pub fn parse(program: &str, opt_level: i32, verbose: bool) -> Vec<Instructions> 
 
                 // If opt_level > 1, check for the pattern equivalent to SetZero
                 // If it matches, add to optimized set of instructions and update remaining
-                (None, [BeginLoop, DecrementValue(1), EndLoop, leftover @ ..]) if opt_level > 1 => {
+                (None, [BeginLoop, DecrementValue(1), EndLoop, leftover @ ..]) 
+                | (None, [BeginLoop, IncrementValue(1), EndLoop, leftover @ ..]) if opt_level > 1 => {
                     optimized.push(SetZero);
                     remaining = leftover;
                 }

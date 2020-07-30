@@ -1,4 +1,4 @@
-# bf-rs
+# bfi-rs
 
 A simple yet efficient brainfuck interpreter written in Rust.
 
@@ -7,14 +7,14 @@ A simple yet efficient brainfuck interpreter written in Rust.
 Note: Rust toolchain required
 
 ``` sh
-$ git clone https://github.com/vcoutasso/bf-rs ; cd bf-rs # Clone the git repository and cd into the directory
+$ git clone https://github.com/vcoutasso/bfi-rs ; cd bfi-rs # Clone the git repository and cd into the directory
 $ cargo build --release # Build the project in release mode. Omitting the --release flag will build in debug mode
 ```
 
 ## Usage 
 
 ``` sh
-bf <FILENAME> --memory <BYTES> --optimization <LEVEL>
+bfi <FILENAME> --memory <BYTES> --optimization <LEVEL>
 ```
 
 The executable can also be called by `cargo run --release` (the `--release` flag is optional but recommended for better performance). It expects a path to the brainfuck program file, which will be read and executed.

@@ -35,7 +35,7 @@ fn main() {
             Arg::with_name("verbose")
                 .short("v")
                 .long("verbose")
-                .help("Prints info about the execution time and instructions count"),
+                .help("Prints info about the execution time and instruction count"),
         )
         .arg(
             Arg::with_name("dump_memory")
@@ -52,14 +52,10 @@ fn main() {
                 .help("Dumps the set of instructions to file after execution finishes"),
         )
         .arg(
-            Arg::with_name("optimization_level")
+            Arg::with_name("optimize")
                 .short("O")
-                .long("optimization")
-                .takes_value(true)
-                .value_name("LEVEL")
-                .default_value("1")
-                .possible_values(&["0", "1", "2"])
-                .help("Optimization level"),
+                .long("optimize")
+                .help("Optimizes the set of instructions before running the program"),
         )
         .get_matches();
 
@@ -86,19 +82,15 @@ fn main() {
     // Original raw program string
     let program = fs::read_to_string(filename).expect("Error reading file");
 
-    // Unwrap is safe here because clap guarantees only valid values will be accepted
-    let opt_level = matches
-        .value_of("optimization_level")
-        .unwrap()
-        .parse()
-        .unwrap();
+    // Optimization flag
+    let optimize = matches.occurrences_of("optimize") == 1;
 
     if verbose {
         println!("Parsing list of instructions..")
     }
 
     // List of raw instructions parsed from program
-    let instructions = bfi::parse(&program, opt_level, verbose);
+    let instructions = bfi::parse(&program, optimize, verbose);
 
     // Print a new line to separate verbose output from the program output
     if verbose {

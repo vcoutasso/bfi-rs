@@ -21,18 +21,13 @@ The executable can also be called by `cargo run --release` (the `--release` flag
 
 The level of optimization and the amount of memory reserved is configurable through their respective flags and bf will output to stdout by default.
 
-## Implementation details
+## Implementation details and features
 
 - Cells are unsigned 8-bit wrapping integers.
 - The starting memory index is 0.
 - Reserved memory is heap allocated and its size is fixed by the -m option.
-- Trying to access an out of bounds address is defined behavior and, therefore, safe.
-- Regarding optimization level (-O option), the options are:
-  * 0: No optimizations performed.
-  * 1: Repeated operations grouped when possible (e.g. +++ becomes a single operation that adds 3). This is the default.
-  * 2: Same as Level 1 plus '[-]' replaced for the equivalent in a single instruction.
-  
-  As a side note, higher optimization level does not always mean lesser runtime. The parsing time to reach the optimized set of instructions _may_ be greater than the time shaved off.
+- Trying to access an out of bounds address is defined behavior (wraps by default).
+- The interpreter ships with a memory and instructions dumper accessible through their respective arguments.
 
 ## License
 

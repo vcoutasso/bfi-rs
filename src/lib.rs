@@ -29,7 +29,7 @@ pub enum Instructions {
 }
 
 /// Translates the code from a string of chars to a Vec of Instructions to be later matched against properly in run(). Returns a vector with the instructions in the order that they appear, but with some optimizations
-pub fn parse(program: &str, opt_level: i32, verbose: bool) -> Vec<Instructions> {
+pub fn parse(program: &str, optimize: bool, verbose: bool) -> Vec<Instructions> {
     // Extract original instructions
     let instructions: Vec<_> = program
         .trim()
@@ -55,7 +55,7 @@ pub fn parse(program: &str, opt_level: i32, verbose: bool) -> Vec<Instructions> 
         )
     }
 
-    if opt_level > 0 {
+    if optimize {
         // This vector contains all instructions in their optimized form (grouped)
         let mut optimized: Vec<Instructions> = vec![];
 
@@ -69,10 +69,10 @@ pub fn parse(program: &str, opt_level: i32, verbose: bool) -> Vec<Instructions> 
                 // No more instructions to check, optimization is done. Exit the loop
                 (None, []) => break,
 
-                // If opt_level > 1, check for the pattern equivalent to SetZero
+                // Check for the patterns equivalent to SetZero ([-] and [+])
                 // If it matches, add to optimized set of instructions and update remaining
                 (None, [BeginLoop, DecrementValue(1), EndLoop, leftover @ ..]) 
-                | (None, [BeginLoop, IncrementValue(1), EndLoop, leftover @ ..]) if opt_level > 1 => {
+                | (None, [BeginLoop, IncrementValue(1), EndLoop, leftover @ ..]) => {
                     optimized.push(SetZero);
                     remaining = leftover;
                 }

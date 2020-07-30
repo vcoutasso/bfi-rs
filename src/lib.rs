@@ -6,13 +6,13 @@ use Instructions::*;
 /// The tuple enum variants hold a value that represents how many times the instruction should be repeated. This overcomes the overhead of repeating the same task over and over in the form of 'unit operations'
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Instructions {
-    /// Next pointer
+    /// Increment pointer by x
     IncrementPointer(usize),
-    /// Previous pointer
+    /// Decrement pointer by x 
     DecrementPointer(usize),
-    /// Increment data
+    /// Increment data by x
     IncrementValue(usize),
-    /// Decrement data
+    /// Decrement data by x
     DecrementValue(usize),
     /// Loop start
     BeginLoop,
@@ -122,7 +122,7 @@ pub fn parse(program: &str, opt_level: i32, verbose: bool) -> Vec<Instructions> 
 pub fn run(inst: &[Instructions], memory: &mut [u8], mut idx: usize) -> (usize, usize) {
     // Variable to keep track of how many instructions were performed
     let mut actions: usize = 0;
-    // Counter
+    // Index of current instruction
     let mut i = 0;
 
     // Indexes of begin loops to keep track of nested loops. Only used to fill jump
@@ -147,23 +147,23 @@ pub fn run(inst: &[Instructions], memory: &mut [u8], mut idx: usize) -> (usize, 
     while i < inst.len() {
         match inst[i] {
             // If idx is equal to the last position, return to the first
-            IncrementPointer(qty) => {
-                idx += qty;
+            IncrementPointer(x) => {
+                idx += x;
                 idx %= memory.len();
             }
             // If idx is equal to the first position, go to the last
-            DecrementPointer(qty) => {
-                if qty > idx {
-                    idx = memory.len() - (qty - idx);
+            DecrementPointer(x) => {
+                if x > idx {
+                    idx = memory.len() - (x - idx);
                 } else {
-                    idx -= qty;
+                    idx -= x;
                 }
             }
-            IncrementValue(qty) => {
-                memory[idx] = memory[idx].wrapping_add(qty as u8);
+            IncrementValue(x) => {
+                memory[idx] = memory[idx].wrapping_add(x as u8);
             }
-            DecrementValue(qty) => {
-                memory[idx] = memory[idx].wrapping_sub(qty as u8);
+            DecrementValue(x) => {
+                memory[idx] = memory[idx].wrapping_sub(x as u8);
             }
             BeginLoop => {
                 if memory[idx] == 0 {
@@ -176,7 +176,7 @@ pub fn run(inst: &[Instructions], memory: &mut [u8], mut idx: usize) -> (usize, 
                 }
             }
             ReadChar => {
-                if let Ok(ch) = io::stdin().bytes().next().expect("Could not read char") {
+                if let Ok(ch) = io::stdin().bytes().next().expect("Could not read from stdin") {
                     memory[idx] = ch
                 }
             }

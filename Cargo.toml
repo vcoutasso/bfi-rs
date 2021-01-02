@@ -3,6 +3,7 @@ name = "bfi"
 version = "0.2.1"
 authors = ["Vinícius Couto <vcoutasso@gmail.com>"]
 edition = "2018"
+description = "A simple interpreter for the brainfuck programming language"
 
 [dependencies]
 clap = "2.33.0"

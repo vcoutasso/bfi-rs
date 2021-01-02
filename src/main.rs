@@ -11,10 +11,10 @@ fn main() {
     let now = Instant::now();
 
     // Info about the program and all possible options/flags
-    let matches = App::new("bfi")
-        .version("0.2.1")
-        .author("Vinícius Couto <vcoutasso@gmail.com>")
-        .about("A simple interpreter for the brainfuck programming language")
+    let matches = App::new(clap::crate_name!())
+        .version(clap::crate_version!())
+        .author(clap::crate_authors!())
+        .about(clap::crate_description!())
         .arg(
             Arg::with_name("filename")
                 .value_name("FILENAME")

@@ -13,7 +13,7 @@ fn main() {
     // Info about the program and all possible options/flags
     let matches = App::new("bfi")
         .version("0.2.0")
-        .author("Vinícius Couto <vinicouto12@gmail.com>")
+        .author("Vinícius Couto <vcoutasso@gmail.com>")
         .about("A simple interpreter for the brainfuck programming language")
         .arg(
             Arg::with_name("filename")
